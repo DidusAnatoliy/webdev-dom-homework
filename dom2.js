@@ -21,6 +21,12 @@ function getComments() {
     }
   )
     .then((response) => {
+      if (!response.ok) {
+        if (response.status === 500) {
+          alert("Сервер сломался, попробуй позже.");
+        }
+        throw new Error('Ответ сервера не был успешным');
+      }
       return response.json();
     })
     .then((responseData) => {
@@ -36,7 +42,16 @@ function getComments() {
       comments = appComments;
       renderComments();
       loadingElement.style.display = 'none';
-    });
+    })
+    .catch(error => {
+      if (error.message !== 'Ответ сервера не был успешным') {
+        console.error('Возникла проблема с операцией fetch:', error);
+        alert("Кажется, у вас сломался интернет, попробуйте позже.");
+      }
+    })
+    .finally(()=>{
+      loadingElement.textContent = 'Не удалось загрузить страницу';
+    })
 };
 getComments();
 
@@ -197,9 +212,6 @@ function addComment() {
   // Скрываем форму добавления комментария
   const commentFormElement = document.querySelector('.add-form');
   commentFormElement.style.display = 'none';
-  //Вввод нового комментария
-  massageSendButton.disabled = true;
-  massageSendButton.textContent = 'Ждите....';
 
   //Функция добавлений данных на сервер
 
@@ -220,6 +232,7 @@ function addComment() {
           .replaceAll('"', "&quot;")
           .replaceAll("%BEGIN_QUOTE", "<div class='quote'>")
           .replaceAll("END_QUOTE%", "</div>"),
+        forceError: true
       })
     }
   ).then(response => {
@@ -232,35 +245,28 @@ function addComment() {
       throw new Error('Ответ сервера не был успешным');
     }
     return response.json();
- })
- .then(() => {
-    return getComments();
- })
- .then(() => {
-  massageSendButton.disabled = false;
-  massageSendButton.textContent = 'Написать';
-  loadingMessageElement.style.display = 'none';
-  commentFormElement.style.display = 'flex';
-})
-.catch(error => {
-  if (error.message === 'Ответ сервера не был успешным') {
-  } else {
-    console.error('Возникла проблема с операцией fetch:', error);
-    alert("Кажется, у вас сломался интернет, попробуйте позже.");
-  }
-    massageSendButton.disabled = false;
-    massageSendButton.textContent = 'Написать';
-    loadingMessageElement.style.display = 'none';
-    commentFormElement.style.display = 'flex';
   })
+    .then(() => {
+      return getComments();
+    })
+    .then(() => {
+      nameInputElement.value = "";
+      commitInputElement.value = "";
+      massageSendButton.disabled = true;
+    })
+    .catch(error => {
+      if (error.message !== 'Ответ сервера не был успешным') {
+        console.error('Возникла проблема с операцией fetch:', error);
+        alert("Кажется, у вас сломался интернет, попробуйте позже.");
+      }
+    })
+    .finally(() => {
+      loadingMessageElement.style.display = 'none';
+      commentFormElement.style.display = 'flex';
+    })
   //Очистка форм input
-  nameInputElement.value = "";
-  commitInputElement.value = "";
   nameInputElement.classList.remove("errorinput");
   commitInputElement.classList.remove("errorinput");
-
-  renderComments();
-
 };
 
 massageSendButton.addEventListener("click", addComment);
