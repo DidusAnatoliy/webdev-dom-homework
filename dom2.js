@@ -30,14 +30,13 @@ export function getComments() {
     loadingElement.style.display = 'none';
   })
     .catch(error => {
+      loadingElement.textContent = 'Не удалось загрузить страницу';
       if (error.message !== 'Ответ сервера не был успешным') {
         console.error('Возникла проблема с операцией fetch:', error);
-        alert("Кажется, у вас сломался интернет, попробуйте позже.");
+        alert("Кажется, у вас сломался интернет, попробуйте позже."); 
       }
     })
-    .finally(() => {
-      loadingElement.textContent = 'Не удалось загрузить страницу';
-    })
+  
 };
 getComments();
 

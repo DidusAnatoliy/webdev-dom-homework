@@ -1,5 +1,6 @@
 import { postComment } from "./api.js";
 import { comments, getComments, listElement} from "./dom2.js";
+import { sanitizeHtml } from "./helpers.js";
 import { renderComments } from "./render.js";
 
 const massageSendButton = document.querySelector('.add-form-button');
@@ -124,8 +125,8 @@ function addComment() {
   
     //Функция добавлений данных на сервер
   
-    postComment(nameInputElement.value,
-      commitInputElement.value).then(() => {
+    postComment(sanitizeHtml(nameInputElement.value),
+    sanitizeHtml (commitInputElement.value)).then(() => {
         return getComments();
       })
       .then(() => {

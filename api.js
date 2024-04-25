@@ -22,18 +22,8 @@ export function postComment(name,text) {
     {
       method: "POST",
       body: JSON.stringify({
-        name: name
-          .replaceAll("&", "&amp;")
-          .replaceAll("<", "&lt;")
-          .replaceAll(">", "&gt;")
-          .replaceAll('"', "&quot;"),
-        text: text
-          .replaceAll("&", "&amp;")
-          .replaceAll("<", "&lt;")
-          .replaceAll(">", "&gt;")
-          .replaceAll('"', "&quot;")
-          .replaceAll("%BEGIN_QUOTE", "<div class='quote'>")
-          .replaceAll("END_QUOTE%", "</div>"),
+        name, 
+        text,
         forceError: true
       })
     }
