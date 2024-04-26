@@ -36,11 +36,10 @@ export function getComments() {
         alert("Кажется, у вас сломался интернет, попробуйте позже."); 
       }
     })
-  
+
 };
 getComments();
 
 
 //массив пользователей
 export let comments = [];
-
