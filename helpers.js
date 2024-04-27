@@ -13,7 +13,7 @@ export function normalizeComments(comments) {
     return comments.map((comment) => {
         return {
             name: comment.author.name,
-            time: new Date().toLocaleString(),
+            time: new Date(comment.date).toLocaleString(),
             comment: comment.text,
             likes: comment.likes,
             isLiked: false,
