@@ -1,41 +1,95 @@
-export function getTodos() {
-  return fetch(
-    'https://wedev-api.sky.pro/api/v1/DidusAnatoliy/comments',
-    {
-      method: "GET"
-    }
-  )
-    .then((response) => {
-      if (!response.ok) {
-        if (response.status === 500) {
-          alert("Сервер сломался, попробуй позже.");
-        }
-        throw new Error('Ответ сервера не был успешным');
-      }
-      return response.json();
-    });
+const baseUrl = "https://wedev-api.sky.pro/api/v1/DidusAnatoliy/comments";
+
+const loginURL = "https://wedev-api.sky.pro/api/user/login";
+
+
+export let token;
+
+export let user;
+
+export const setToken = (newToken) => {
+  token = newToken;
 }
 
-export function postComment(name,text) {
-  return fetch(
-    'https://wedev-api.sky.pro/api/v1/DidusAnatoliy/comments',
+export const setUser = (newUser) => {
+  user = newUser;
+}
+
+export function getPromise() {
+
+  return fetch(baseUrl,
     {
-      method: "POST",
-      body: JSON.stringify({
-        name, 
-        text,
-        forceError: true
-      })
-    }
-  ).then(response => {
-    if (!response.ok) {
-      if (response.status === 400) {
-        alert("Имя и комментарий должны быть не короче 3 символов.");
-      } else if (response.status === 500) {
-        alert("Сервер сломался, попробуй позже.");
+      method: "GET",
+
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+
+
+    })
+
+    .then((response) => {
+
+      if (response.status === 500) {
+        throw new Error("Сервер упал")
+      } else {
+        return response.json();
       }
-      throw new Error('Ответ сервера не был успешным');
+
+    })
+
+}
+
+export function postPromise({ text, name }) {
+
+  return fetch(baseUrl, {
+
+    method: 'POST',
+
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+
+    body: JSON.stringify({
+
+      text: text,
+
+      name: name,
+
+      forceError: true,
+
+
+    })
+
+  }).then((response) => {
+
+    console.log(response);
+
+    if (response.status === 201) {
+      return response.json();
+    } else if (response.status === 500) {
+      throw new Error("Сервер упал")
+    } else if (response.status === 400) {
+      throw new Error("Недопустимое количество символов")
     }
-    return response.json();
-  });
+  })
+}
+
+export function loginUser({ login, password }) {
+  return fetch(loginURL, {
+    method: "POST",
+    body: JSON.stringify({
+      login,
+      password,
+    }),
+  })
+    .then((response) => {
+      if (response.status === 201) {
+        return response.json();
+      } else if (response.status === 500) {
+        throw new Error("Сервер упал")
+      } else if (response.status === 400) {
+        throw new Error("Неправильный логин или пароль")
+      }
+    })
 }

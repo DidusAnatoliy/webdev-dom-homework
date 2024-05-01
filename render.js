@@ -1,45 +1,68 @@
-import { comments } from "./dom2.js";
-import { doneButtonListners, editButtonListners, likeButtonListners, quoteElementsListners } from "./listeners.js";
+import { token, user } from "./api.js";
+import { answerComment, initEventAndCommentListener, initEventListeners } from "./listeners.js";
+import { renderLogin } from "./login.js";
 
-export const renderComments = (listElement) => {
-  const commentsHtml = comments.map((comment, index) => {
-    let activeLikeClass;
-    if (comments[index].isLiked === true) {
-      activeLikeClass = "active-like"
-    } else {
-      activeLikeClass = ""
-    }
-
-    let massageHideClass;
-    let doneHideClass;
-
-
-    return `
-        <li class="comment" data-index="${index}">
+export const renderComments = (comments) => {
+    const appElement = document.getElementById("app");
+    const commentsHtml = comments
+    .map((comment, index) => {
+      return ` <li class="comment">
           <div class="comment-header">
             <div>${comment.name}</div>
-            <div>${comment.date}</div>
+            <div>${comment.time}</div>
           </div>
           <div class="comment-body">
-              <p class ="done ${doneHideClass}" data-index="${index}"></p>
-            <div class="comment-text ${massageHideClass}" data-index="${index}">
-              ${comment.massage}
-              <p class ="edit" data-index="${index}"></p>
+            <div class="comment-text">
+              ${comment.comment}
             </div>
           </div>
           <div class="comment-footer">
             <div class="likes">
-              <span class="likes-counter">${comment.likesCounter}</span>
-              <button class="like-button ${activeLikeClass}" data-index="${index}" data-like="${comment.isLiked}"></button>
-              </div>
+              <span class="likes-counter">${comments[index].likes}</span>
+              <button data-index= "${index}" class="like-button ${comment.isLiked ? '-active-like' : ''}"></button>
+            </div>
           </div>
-        </li>`
-  }).join("")
-  listElement.innerHTML = commentsHtml;
+        </li> `
+    }).join("");
 
-  likeButtonListners();
-  editButtonListners();
-  doneButtonListners();
-  quoteElementsListners();
+    const formHtml = `<div class="add-form">
+    <input
+      type="text"
+      class="add-form-name"
+      placeholder="Введите ваше имя"
+      value=${user}
+      disabled
+    />
+    <textarea
+      class="add-form-text"
+      placeholder="Введите ваш коментарий"
+      rows="4"
+    ></textarea>
+    <div class="add-form-row">
+      <button class="add-form-button">Написать</button>
+    </div>
+  </div>`
+    
+    // listCommentsElement.innerHTML = commentsHtml;   
 
-}
+    appElement.innerHTML = `
+    <ul class="comments" id="list-comments" >${commentsHtml}</ul>
+    ${token ? formHtml : '<p>Чтобы добавить комментарий, <a href="#" class="login-btn">авторизуйтесь</a>.</p>'}
+    `; 
+
+    function actionLogin() {
+      if (token) {
+        return
+      }
+      const loginBtn = document.querySelector('.login-btn');
+      loginBtn.addEventListener('click', () => {
+        renderLogin();
+      })
+    }
+
+    actionLogin();
+    
+    initEventListeners({comments});
+    initEventAndCommentListener();     
+    answerComment();
+    };

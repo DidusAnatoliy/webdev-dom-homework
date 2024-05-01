@@ -1,147 +1,139 @@
-import { postComment } from "./api.js";
-import { comments, getComments, listElement} from "./dom2.js";
-import { sanitizeHtml } from "./helpers.js";
-import { renderComments } from "./render.js";
+import { getPromise, postPromise, token } from "./api.js";
+import { sanitize , normalizeComments} from "./helpers.js";
+import {renderComments} from "./render.js"
+import {comments, setComments} from "./index.js"
 
-const massageSendButton = document.querySelector('.add-form-button');
-const nameInputElement = document.querySelector('.add-form-name');
-const commitInputElement = document.querySelector('.add-form-text');
+//функция добавления лайка
+export const initEventListeners = ({comments}) => {
+  
+    const likesElements = document.querySelectorAll(".like-button");
+    for (const likesElement of likesElements) {    
+      likesElement.addEventListener('click', (event) => {
+        event.stopPropagation();
 
-export const likeButtonListners = () => {
-    const likeButtonElements = document.querySelectorAll('.like-button');
-    for (const likeButtonElement of likeButtonElements) {
-        likeButtonElement.addEventListener('click', event => {
-            event.stopPropagation();
-            const index = likeButtonElement.dataset.index;
+        if (!token) {
+          return
+        }
 
-            if (comments[index].isLiked === false) {
-                comments[index].likesCounter = comments[index].likesCounter + 1;
-                comments[index].isLiked = true;
+        const index = likesElement.dataset.index;
+        const comment = comments[index]
+    
+        console.log(comment.likes);
+        if (comment.isLiked) {
+          comment.isLiked = false;
+          comment.likes--;
+          
+        } else {
+          comment.isLiked = true;
+          comment.likes++;
+        }
 
-            } else {
-                comments[index].isLiked = false;
-                comments[index].likesCounter = comments[index].likesCounter - 1;
+        let commentTextElement = document.querySelector(".add-form-text")
 
-            }
-            renderComments(listElement);
+        renderComments(comments)
 
-        })
+        // if (!commentTextElement)
+        //   return
+        //
+        // const commentText = commentTextElement.value
+        //
+        // if (!commentText)
+        //   return
+        //
+        // commentTextElement = document.querySelector(".add-form-text")
+        //
+        // if (commentTextElement)
+        //   commentTextElement.value = commentText
+
+        if (commentTextElement) {
+          const commentText = commentTextElement.value
+
+          if (commentText) {
+            const commentTextElement = document.querySelector(".add-form-text")
+
+            if (commentTextElement)
+              commentTextElement.value = commentText
+          }
+        }
+      });
     }
-}
-
-//Функции ответа на комментарий
-
-export const editButtonListners = () => {
-    const editButtonElements = document.querySelectorAll(".edit");
-    for (const editButtonElement of editButtonElements) {
-        editButtonElement.addEventListener("click", (event) => {
-            event.stopPropagation();
-            comments[editButtonElement.dataset.index].isEdit = false;
-            renderComments(listElement);
-        })
-    }
-}
-
-export const doneButtonListners = () => {
-    const doneButtonElements = document.querySelectorAll(".done");
-    for (const doneButtonElement of doneButtonElements) {
-        doneButtonElement.addEventListener("click", (event) => {
-            event.stopPropagation();
-            const dune = doneButtonElement.dataset.index;
-            const addFormTextEdit = document.querySelectorAll(".addformedit");
-            comments[done].massage = addFormTextEdit[done].value;
-            comments[done].isEdit = true;
-            renderComments(listElement);
-        })
-
-    }
-}
-
-
-export const quoteElementsListners = () => {
-    const quoteElements = document.querySelectorAll(".comment-text");
-    for (const quoteElement of quoteElements) {
-        quoteElement.addEventListener("click", () => {
-            const quote = quoteElement.dataset.index;
-            commitInputElement.value = ">" + comments[quote].massage + "\n" + comments[quote].name + "\n";
-            renderComments(listElement);
-        })
-    }
-}
-
-export function initFormListeners() {
-    massageSendButton.disabled = true;
-    massageSendButton.addEventListener("click", addComment);
-    checkForSpace()
-    setDisableButton()
 };
 
+export const initEventAndCommentListener = () => {
+    const nameElement = document.querySelector(".add-form-name");
+    const textElement = document.querySelector(".add-form-text");
+    const buttonElement = document.querySelector(".add-form-button");
 
-function checkForSpace (){
-    nameInputElement.oninput = () => {
-        if (nameInputElement.value.charAt(0) === ' ') {
-          nameInputElement.value = '';
-        }
-      }
-      
-      commitInputElement.oninput = () => {
-        if (commitInputElement.value.charAt(0) === ' ') {
-          commitInputElement.value = '';
-        }
-      }
-}
-
-function setDisableButton (){
-    nameInputElement.addEventListener("input", () => {
-        massageSendButton.disabled = false;
-    })
-    
-    commitInputElement.addEventListener("input", () => {
-        massageSendButton.disabled = false;
-    })
-}
-
-function addComment() {
-    nameInputElement.classList.remove("errorinput");
-    commitInputElement.classList.remove("errorinput");
-    if (nameInputElement.value === "" && commitInputElement.value === "") {
-      nameInputElement.classList.add("errorinput");
-      commitInputElement.classList.add("errorinput");
-      return
-    } else if (nameInputElement.value === "") {
-      nameInputElement.classList.add("errorinput");
-      return
-    } else if (commitInputElement.value === "") {
-      commitInputElement.classList.add("errorinput");
+    if (!token) {
       return
     }
-  
-    const loadingMessageElement = document.getElementById('loading-message');
-    loadingMessageElement.style.display = 'block';
-  
-    // Скрываем форму добавления комментария
-    const commentFormElement = document.querySelector('.add-form');
-    commentFormElement.style.display = 'none';
-  
-    //Функция добавлений данных на сервер
-  
-    postComment(sanitizeHtml(nameInputElement.value),
-    sanitizeHtml (commitInputElement.value)).then(() => {
-        return getComments();
-      })
-      .then(() => {
-        nameInputElement.value = "";
-        commitInputElement.value = "";
-        massageSendButton.disabled = true;
-      })
-      .catch(error => {
-        if (error.message !== 'Ответ сервера не был успешным') {
-          console.error('Возникла проблема с операцией fetch:', error);
-          alert("Кажется, у вас сломался интернет, попробуйте позже.");
+
+    buttonElement.addEventListener("click", () => {
+        nameElement.classList.remove("error");
+        textElement.classList.remove("error");
+        if (nameElement.value === "" || textElement.value === "") {
+          nameElement.classList.add("error");
+          textElement.classList.add("error");
+          return;
         }
-      })
-      .finally(() => {
-        loadingMessageElement.style.display = 'none';
-        commentFormElement.style.display = 'flex';
-      })
-  }
+        postPromise({
+
+            text: sanitize(textElement.value),
+        
+            name: sanitize(nameElement.value)
+        
+        }).then(() => {
+        
+        getPromise()
+        .then((responseData) => {
+            // console.log(responseData);
+            const appComments = normalizeComments(responseData.comments);
+              
+            // получили данные и рендерим их в приложении
+            setComments(appComments);
+            //console.log(comments)
+            renderComments(comments, initEventListeners, answerComment);
+            
+          })
+        
+        })
+        .then(() => {
+        buttonElement.disabled = false;
+        buttonElement.textContent = 'Написать';
+        nameElement.value = "";
+        textElement.value = "";
+        })
+        .catch((error) => {
+        buttonElement.disabled = false;
+        buttonElement.textContent = 'Написать';
+        
+        if (error.message === "Сервер упал") {
+          alert("Сервер упал, попробуй еще раз")
+        }
+        if (error.message === "Недопустимое количество символов") {
+          alert("Имя и комментарий должны быть не короче 3-х символов")
+        }
+        if (error.message === 'Failed to fetch') {
+          alert('Интернет не работает, попробуйте позже');
+        }
+        console.warn(error);
+        })
+      
+        buttonElement.disabled = true;
+        buttonElement.textContent = 'Еще чуть-чуть и все появится...';
+      
+      });
+}
+//функция ответа на комментарии
+   export function answerComment() {
+    if (!token) {
+      return
+    }
+    const comment = document.querySelectorAll('.comment');
+    const formElementText = document.querySelector('.add-form-text');
+    comment.forEach((el, index) => {
+    el.addEventListener('click', () => {
+    formElementText.value = `>${comments[index].name} \n ${comments[index].comment}`
+    })
+    });
+    }
